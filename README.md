@@ -1,14 +1,18 @@
-# GitHub Conductor
+<p align="center">
+  <img src="public/icons/icon-128.png" alt="GitHub Conductor icon — a steam locomotive on a dark GitHub-themed card" width="96" height="96" />
+</p>
 
-> One click from any GitHub PR to a Conductor workspace with your prompt
-> already running.
+<h1 align="center">GitHub Conductor</h1>
 
-A lightweight Chrome extension that injects a button on every GitHub Pull
-Request page. Click it and your configured prompt — populated with the PR's
-metadata — opens in a fresh [Conductor](https://conductor.build) workspace via
-the `conductor://` deep link.
+<p align="center">
+  One click from any GitHub PR to a <a href="https://conductor.build">Conductor</a>
+  workspace with your prompt already running.
+</p>
 
-![screenshot placeholder](public/icons/icon-128.png)
+A lightweight Chrome extension that adds a **Conductor** section to every
+GitHub Pull Request's right sidebar — directly above _Reviewers_. Click the
+button and your configured prompt, populated with the PR's metadata, opens
+in a fresh Conductor workspace via the `conductor://` deep link.
 
 ## Why
 
@@ -89,8 +93,6 @@ GitHub button runs. All presets are accessible from the toolbar popup.
 
 ## Architecture
 
-Five small, separately testable modules:
-
 ```
 src/
 ├── types.ts          ← shared TypeScript types
@@ -98,10 +100,15 @@ src/
 ├── template.ts       ← {placeholder} substitution engine
 ├── conductor-url.ts  ← builds conductor:// URLs with safe encoding
 ├── pr-scraper.ts     ← extracts PR metadata from the DOM
-├── content/          ← content script: button injection on PR pages
-├── options/          ← settings page
+├── content/          ← content script: sidebar widget above Reviewers
+├── options/          ← settings page (manage presets, URL template)
 └── popup/            ← toolbar popup with preset list
 ```
+
+The widget injects above `#reviewers-select-menu` in GitHub's PR sidebar —
+a stable selector from GitHub's Rails partial that's been around for years
+(the same anchor [Refined GitHub](https://github.com/refined-github/refined-github)
+uses). Three-tier fallback: reviewers → sidebar top → PR header.
 
 Side effects live at the boundary (`storage`, `content`, `popup`). Everything
 else is pure functions, which is why **34 unit tests** run in under a second.
