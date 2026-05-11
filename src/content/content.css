@@ -1,50 +1,103 @@
-/* Inline GitHub-PR header button — adopts GitHub's "btn" baseline and adds a
-   Conductor-branded accent so it's discoverable next to the native actions. */
+/* Conductor widget — lives inside GitHub's PR right sidebar above Reviewers.
+   We piggy-back on GitHub's `.discussion-sidebar-item` for padding / border
+   alignment, then layer our own brand colors on top so the widget reads as
+   a related-but-distinct extension surface. */
 
-#conductor-pr-button.conductor-pr-button {
-  display: inline-flex;
+#conductor-pr-widget.conductor-widget {
+  padding-top: 12px;
+  padding-bottom: 16px;
+}
+
+#conductor-pr-widget .conductor-widget-heading {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--fgColor-muted, var(--color-fg-muted, #57606a));
+  display: flex;
   align-items: center;
   gap: 6px;
-  margin-right: 8px;
+}
+
+#conductor-pr-widget .conductor-widget-heading::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-color: #5b6cff;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 60%, transparent 62%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 60%, transparent 62%);
+  border-radius: 2px;
+}
+
+#conductor-pr-widget .conductor-widget-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+#conductor-pr-widget .conductor-pr-button {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-weight: 600;
   color: #ffffff;
   background: linear-gradient(180deg, #5b6cff 0%, #4453e3 100%);
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 6px;
-  padding: 5px 12px;
+  padding: 6px 12px;
   cursor: pointer;
   line-height: 20px;
   font-size: 12px;
+  text-align: center;
   transition:
     filter 0.12s ease,
     transform 0.05s ease;
 }
 
-#conductor-pr-button.conductor-pr-button:hover {
+#conductor-pr-widget .conductor-pr-button:hover {
   filter: brightness(1.08);
 }
 
-#conductor-pr-button.conductor-pr-button:active {
+#conductor-pr-widget .conductor-pr-button:active {
   transform: translateY(1px);
 }
 
-#conductor-pr-button.conductor-pr-button:focus-visible {
+#conductor-pr-widget .conductor-pr-button:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 1px;
   box-shadow: 0 0 0 4px rgba(91, 108, 255, 0.6);
 }
 
-#conductor-pr-button .conductor-pr-button-icon {
+#conductor-pr-widget .conductor-pr-button-icon {
   font-size: 10px;
   line-height: 1;
 }
 
-#conductor-pr-button.conductor-pr-button--flash {
+#conductor-pr-widget .conductor-pr-button--flash {
   background: linear-gradient(180deg, #1f883d 0%, #1a7234 100%);
 }
 
+#conductor-pr-widget .conductor-preset-select {
+  flex: 0 0 auto;
+  background: var(--bgColor-default, var(--color-canvas-default, #ffffff));
+  color: var(--fgColor-default, var(--color-fg-default, #1f2328));
+  border: 1px solid var(--borderColor-default, var(--color-border-default, #d0d7de));
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#conductor-pr-widget .conductor-preset-select:hover {
+  background: var(--bgColor-muted, var(--color-canvas-subtle, #f6f8fa));
+}
+
 @media (prefers-color-scheme: dark) {
-  #conductor-pr-button.conductor-pr-button {
+  #conductor-pr-widget .conductor-pr-button {
     border-color: rgba(255, 255, 255, 0.12);
   }
 }

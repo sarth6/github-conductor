@@ -3,6 +3,7 @@ import { buildConductorUrl } from '../conductor-url';
 import { createStorage } from '../storage';
 import type { Preset, Settings } from '../types';
 
+const WIDGET_ID = 'conductor-pr-widget';
 const BUTTON_ID = 'conductor-pr-button';
 const INJECTED_ATTR = 'data-conductor-injected';
 
@@ -13,9 +14,8 @@ void (async () => {
   currentSettings = await storage.getSettings();
   storage.onChange((s) => {
     currentSettings = s;
-    // Re-render so the button label reflects the latest default preset name.
-    const existing = document.getElementById(BUTTON_ID);
-    existing?.remove();
+    // Re-render so the widget label reflects the latest default preset name.
+    document.getElementById(WIDGET_ID)?.remove();
     tryInject();
   });
   setupNavigationListeners();
@@ -73,60 +73,117 @@ function setupNavigationListeners(): void {
     document.addEventListener(event, () => tryInject());
   }
 
-  // Fallback: a MutationObserver watching the header region. When GitHub
-  // re-renders the PR header after navigation, we re-inject our button.
+  // GitHub's PR sidebar mounts asynchronously after the initial document
+  // render. We watch the whole body so any time the sidebar (re)appears we
+  // try injecting again. The injection itself is idempotent — if the widget
+  // is already present, tryInject() returns early.
   const observer = new MutationObserver(() => {
-    if (!document.getElementById(BUTTON_ID)) tryInject();
+    if (!document.getElementById(WIDGET_ID)) tryInject();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
 function tryInject(): void {
   if (!isPrPage(window.location)) return;
-  if (document.getElementById(BUTTON_ID)) return;
+  if (document.getElementById(WIDGET_ID)) return;
 
-  // Try several anchor points so we degrade gracefully across GitHub
-  // redesigns. We insert next to the existing "Code" / "Subscribe" actions.
-  const anchor = findAnchor();
-  if (!anchor) return;
+  const placement = findPlacement();
+  if (!placement) return;
 
-  const button = createButton();
-  anchor.parentElement?.insertBefore(button, anchor);
+  const widget = createWidget();
+  placement.parent.insertBefore(widget, placement.before);
 }
 
-function findAnchor(): Element | null {
-  // Preferred: the right-side header actions container on the PR conversation page.
-  const selectors = [
-    '.gh-header-actions',
-    '.gh-header-meta + div .gh-header-actions',
-    '[data-testid="pr-header-actions"]',
-  ];
-  for (const sel of selectors) {
-    const el = document.querySelector(sel);
-    if (el) {
-      // Insert as a sibling at the start of the actions row.
-      return el.firstElementChild ?? el;
-    }
+interface Placement {
+  parent: Element;
+  /** Element to insert *before*. `null` means append as last child. */
+  before: Element | null;
+}
+
+/**
+ * Find where to insert the Conductor widget.
+ *
+ * Preferred location: directly above the Reviewers section in the PR's right
+ * sidebar (`#reviewers-select-menu`). We fall back to the top of the sidebar,
+ * then to the PR header — so the button stays visible across GitHub
+ * redesigns and across the PR conversation/files/commits tabs.
+ *
+ * Selectors are taken from the patterns Refined GitHub uses
+ * (`#partial-discussion-sidebar`, `#reviewers-select-menu`), which have been
+ * stable for years because they come from server-side Rails partials.
+ */
+function findPlacement(): Placement | null {
+  // 1. Best: insert above the Reviewers section
+  const reviewers = document.querySelector('#reviewers-select-menu');
+  if (reviewers?.parentElement) {
+    return { parent: reviewers.parentElement, before: reviewers };
   }
+
+  // 2. Next best: prepend to the sidebar so it's still in the right column
+  const sidebar = document.querySelector('#partial-discussion-sidebar');
+  if (sidebar) {
+    return { parent: sidebar, before: sidebar.firstElementChild };
+  }
+
+  // 3. Fallback: next to the PR header actions
+  const headerActions = document.querySelector(
+    '.gh-header-actions, [data-testid="pr-header-actions"]',
+  );
+  if (headerActions) {
+    return { parent: headerActions, before: headerActions.firstElementChild };
+  }
+
   return null;
 }
 
-function createButton(): HTMLButtonElement {
+/**
+ * Build the sidebar widget — styled like a native GitHub `discussion-sidebar-item`.
+ *
+ * Layout:
+ *   ┌─────────────────────────────┐
+ *   │ Conductor                   │   ← heading (matches native sidebar)
+ *   ├─────────────────────────────┤
+ *   │ [▶ Conductor: Review PR  ⌄] │   ← primary button + preset dropdown
+ *   └─────────────────────────────┘
+ */
+function createWidget(): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.id = WIDGET_ID;
+  wrapper.className = 'conductor-widget discussion-sidebar-item';
+  wrapper.setAttribute(INJECTED_ATTR, 'true');
+
+  const heading = document.createElement('h3');
+  heading.className = 'conductor-widget-heading discussion-sidebar-heading';
+  heading.textContent = 'Conductor';
+  wrapper.appendChild(heading);
+
+  const row = document.createElement('div');
+  row.className = 'conductor-widget-row';
+  wrapper.appendChild(row);
+
+  row.appendChild(createPrimaryButton());
+  if (currentSettings && currentSettings.presets.length > 1) {
+    row.appendChild(createPresetSelect());
+  }
+
+  return wrapper;
+}
+
+function createPrimaryButton(): HTMLButtonElement {
   const button = document.createElement('button');
   button.id = BUTTON_ID;
   button.type = 'button';
-  button.className = 'conductor-pr-button btn btn-sm';
-  button.setAttribute(INJECTED_ATTR, 'true');
+  button.className = 'conductor-pr-button';
   button.title = 'Open this PR in a new Conductor workspace';
 
-  // Build the label with safe DOM construction (no innerHTML).
   const icon = document.createElement('span');
   icon.className = 'conductor-pr-button-icon';
   icon.setAttribute('aria-hidden', 'true');
-  icon.textContent = '▶'; // ▶
+  icon.textContent = '▶';
   button.appendChild(icon);
 
   const label = document.createElement('span');
+  label.className = 'conductor-pr-button-label';
   const presetName = currentSettings ? getDefaultPreset(currentSettings)?.name : null;
   label.textContent = presetName ? `Conductor: ${presetName}` : 'Open in Conductor';
   button.appendChild(label);
@@ -137,6 +194,44 @@ function createButton(): HTMLButtonElement {
   });
 
   return button;
+}
+
+/**
+ * Dropdown listing every configured preset (visible when there are 2+).
+ *
+ * Choosing a preset from the dropdown immediately fires that preset and
+ * resets the select to its first option, so the dropdown acts as a one-shot
+ * launcher rather than a persistent selector.
+ */
+function createPresetSelect(): HTMLSelectElement {
+  const select = document.createElement('select');
+  select.className = 'conductor-preset-select';
+  select.title = 'Pick a different preset';
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '⌄';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
+  if (currentSettings) {
+    for (const preset of currentSettings.presets) {
+      const opt = document.createElement('option');
+      opt.value = preset.id;
+      opt.textContent = preset.name;
+      select.appendChild(opt);
+    }
+  }
+
+  select.addEventListener('change', () => {
+    const presetId = select.value;
+    select.selectedIndex = 0;
+    if (!presetId) return;
+    void runPreset(presetId);
+  });
+
+  return select;
 }
 
 function getDefaultPreset(settings: Settings): Preset | undefined {
