@@ -1,0 +1,50 @@
+/* Inline GitHub-PR header button — adopts GitHub's "btn" baseline and adds a
+   Conductor-branded accent so it's discoverable next to the native actions. */
+
+#conductor-pr-button.conductor-pr-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(180deg, #5b6cff 0%, #4453e3 100%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  line-height: 20px;
+  font-size: 12px;
+  transition:
+    filter 0.12s ease,
+    transform 0.05s ease;
+}
+
+#conductor-pr-button.conductor-pr-button:hover {
+  filter: brightness(1.08);
+}
+
+#conductor-pr-button.conductor-pr-button:active {
+  transform: translateY(1px);
+}
+
+#conductor-pr-button.conductor-pr-button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(91, 108, 255, 0.6);
+}
+
+#conductor-pr-button .conductor-pr-button-icon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+#conductor-pr-button.conductor-pr-button--flash {
+  background: linear-gradient(180deg, #1f883d 0%, #1a7234 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  #conductor-pr-button.conductor-pr-button {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
