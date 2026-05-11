@@ -37,9 +37,12 @@ export const DEFAULT_SETTINGS: Settings = {
   ],
   defaultPresetId: 'review',
   urlConfig: {
-    // Default to the format Conductor's Linear integration uses (changelog v0.36.4).
-    // The full prompt is passed in the `prompt` query param.
-    template: 'conductor://new?prompt={prompt}',
+    // Conductor's deep link is structurally unusual: the prompt sits directly
+    // after `://` with no host or query string — `conductor://prompt=<text>`,
+    // NOT `conductor://new?prompt=…` or `conductor://?prompt=…`.
+    // Empirically verified across ~25 candidate formats; this is the only one
+    // that triggers the workspace creation flow.
+    template: 'conductor://prompt={prompt}',
   },
 };
 
@@ -104,17 +107,35 @@ class MemoryStorageAdapter implements StorageAdapter {
 }
 
 /**
+ * URL templates we shipped in older versions that turned out to be broken
+ * (Conductor's actual deep link is `conductor://prompt=…`, not any
+ * `conductor://…?prompt=…` form). When we see one of these stored, we
+ * silently migrate to the current default. Listed exactly so we never
+ * touch a user's intentional customization that happens to look similar.
+ */
+const KNOWN_BROKEN_URL_TEMPLATES = new Set<string>([
+  'conductor://new?prompt={prompt}',
+  'conductor://?prompt={prompt}',
+  'conductor://open?prompt={prompt}',
+  'conductor://workspace?prompt={prompt}',
+]);
+
+/**
  * Merge any partial stored settings with defaults so new fields added in
- * future versions are populated without wiping user data.
+ * future versions are populated without wiping user data. Also migrates
+ * known-broken URL templates to the current default.
  */
 export function mergeWithDefaults(stored: Partial<Settings> | undefined): Settings {
   if (!stored) return structuredClone(DEFAULT_SETTINGS);
+  const storedTemplate = stored.urlConfig?.template;
+  const template =
+    storedTemplate && !KNOWN_BROKEN_URL_TEMPLATES.has(storedTemplate)
+      ? storedTemplate
+      : DEFAULT_SETTINGS.urlConfig.template;
   return {
     presets: stored.presets ?? DEFAULT_SETTINGS.presets,
     defaultPresetId: stored.defaultPresetId ?? DEFAULT_SETTINGS.defaultPresetId,
-    urlConfig: {
-      template: stored.urlConfig?.template ?? DEFAULT_SETTINGS.urlConfig.template,
-    },
+    urlConfig: { template },
   };
 }
 

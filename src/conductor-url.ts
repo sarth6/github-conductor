@@ -13,9 +13,15 @@ import { renderTemplate } from './template';
  *      URL-encoded prompt. Other PR metadata placeholders in the URL template
  *      are also URL-encoded.
  *
- * This keeps the URL template authorable (`conductor://new?prompt={prompt}`)
+ * This keeps the URL template authorable (`conductor://prompt={prompt}`)
  * while preventing malformed URLs when the PR title contains `&`, `=`, `#`,
  * spaces, newlines, etc.
+ *
+ * Note on Conductor's unusual URL shape: the working format is
+ *   `conductor://prompt=<encoded text>`
+ * — no host, no `?`, the `prompt=…` sits directly after `://`. We still URL-
+ * encode the text the same way, but the structural template differs from a
+ * conventional `scheme://host?key=value` URL.
  */
 export function buildConductorUrl(
   urlConfig: ConductorUrlConfig,

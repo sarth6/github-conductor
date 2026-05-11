@@ -51,15 +51,17 @@ Right-click the toolbar icon → **Options** (or use the gear in the popup).
 Sets the `conductor://` URL opened on click. The default is:
 
 ```
-conductor://new?prompt={prompt}
+conductor://prompt={prompt}
 ```
+
+> **Note on Conductor's unusual URL shape**: the working format has the
+> prompt sitting directly after `://` — no host, no `?`. It is not
+> `conductor://new?prompt=…` or `conductor://?prompt=…`. The Conductor app
+> looks for `prompt=` at the start of the URL body. This format was
+> empirically verified across ~25 candidate URLs.
 
 `{prompt}` is replaced with the URL-encoded rendered prompt. You can also use
-PR metadata placeholders directly in the URL (e.g. to set the workspace path):
-
-```
-conductor://new?prompt={prompt}&path=/Users/me/code/{repoName}
-```
+PR metadata placeholders directly in the URL template.
 
 ### Prompt presets
 

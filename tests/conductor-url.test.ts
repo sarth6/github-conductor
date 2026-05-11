@@ -18,20 +18,18 @@ const fixture: PRMetadata = {
 };
 
 describe('buildConductorUrl', () => {
-  it('builds the default conductor://new?prompt=... URL', () => {
+  it('builds the default conductor://prompt=… URL (no host, no ?)', () => {
     const url = buildConductorUrl(
-      { template: 'conductor://new?prompt={prompt}' },
+      { template: 'conductor://prompt={prompt}' },
       'Review PR: {prTitle}',
       fixture,
     );
-    expect(url).toBe(
-      `conductor://new?prompt=${encodeURIComponent('Review PR: Fix bug & add tests')}`,
-    );
+    expect(url).toBe(`conductor://prompt=${encodeURIComponent('Review PR: Fix bug & add tests')}`);
   });
 
   it('URL-encodes special characters in the rendered prompt', () => {
     const url = buildConductorUrl(
-      { template: 'conductor://new?prompt={prompt}' },
+      { template: 'conductor://prompt={prompt}' },
       '{prTitle} & {prAuthor}',
       fixture,
     );
@@ -40,24 +38,13 @@ describe('buildConductorUrl', () => {
   });
 
   it('encodes PR metadata placeholders used directly in the URL template', () => {
+    // Legacy ?prompt=…&path=… style still supported for users who want it.
     const url = buildConductorUrl(
-      { template: 'conductor://new?prompt={prompt}&path={repo}' },
+      { template: 'conductor://prompt={prompt}&path={repo}' },
       'go',
       fixture,
     );
-    expect(url).toBe('conductor://new?prompt=go&path=octocat%2Fhello');
-  });
-
-  it('preserves the path query param example from the Conductor changelog', () => {
-    // Conductor v0.36.4: "handle prompt and path parameters"
-    const url = buildConductorUrl(
-      { template: 'conductor://new?prompt={prompt}&path=/Users/me/code/{repoName}' },
-      'Look at #{prNumber}',
-      fixture,
-    );
-    expect(url).toBe(
-      `conductor://new?prompt=${encodeURIComponent('Look at #42')}&path=/Users/me/code/hello`,
-    );
+    expect(url).toBe('conductor://prompt=go&path=octocat%2Fhello');
   });
 });
 

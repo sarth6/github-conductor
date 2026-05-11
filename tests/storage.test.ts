@@ -21,6 +21,24 @@ describe('mergeWithDefaults', () => {
     expect(merged.urlConfig.template).toBe(DEFAULT_SETTINGS.urlConfig.template);
   });
 
+  it('migrates known-broken URL templates to the working default', () => {
+    for (const broken of [
+      'conductor://new?prompt={prompt}',
+      'conductor://?prompt={prompt}',
+      'conductor://open?prompt={prompt}',
+      'conductor://workspace?prompt={prompt}',
+    ]) {
+      const merged = mergeWithDefaults({ urlConfig: { template: broken } });
+      expect(merged.urlConfig.template).toBe('conductor://prompt={prompt}');
+    }
+  });
+
+  it('preserves a custom URL template that is not on the known-broken list', () => {
+    const custom = 'conductor://prompt={prompt}&path=/Users/me/code/{repoName}';
+    const merged = mergeWithDefaults({ urlConfig: { template: custom } });
+    expect(merged.urlConfig.template).toBe(custom);
+  });
+
   it('returns a deep clone so callers cannot mutate defaults', () => {
     const a = mergeWithDefaults(undefined);
     const b = mergeWithDefaults(undefined);
