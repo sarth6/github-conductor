@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6f7eff"/>
+      <stop offset="100%" stop-color="#3441c2"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" ry="24" fill="url(#g)"/>
+  <!-- conductor's baton: stylized angled lines -->
+  <g transform="translate(64 64) rotate(-15)" stroke="white" stroke-linecap="round" fill="none">
+    <line x1="-30" y1="-22" x2="30" y2="-22" stroke-width="10"/>
+    <line x1="-30" y1="0"   x2="30" y2="0"   stroke-width="10"/>
+    <line x1="-30" y1="22"  x2="30" y2="22"  stroke-width="10"/>
+  </g>
+  <!-- right-pointing arrow caps to suggest "open" / "go" -->
+  <g fill="white">
+    <polygon points="36,40 36,60 50,50" />
+    <polygon points="36,68 36,88 50,78" />
+  </g>
+</svg>
