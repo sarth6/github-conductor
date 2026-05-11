@@ -1,0 +1,1 @@
+/Users/sarth/conductor/repos/github-conductor/.claude/skills/gstack/plan-ceo-review/SKILL.md
